@@ -1,56 +1,47 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
-# Sample workflow for building and deploying a Jekyll site to GitHub Pages
-name: Deploy Jekyll site to Pages
+name: Jekyll site CI
 
 on:
-  # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
-
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
+  pull_request:
+    branches: ["main"]
 
 jobs:
-  # Build job
   build:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@8575951200e472d5f2d95c625da0c7bec8217c42 # v1.161.0
-        with:
-          ruby-version: '3.1' # Not needed with a .ruby-version file
-          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
-          cache-version: 0 # Increment this number if you need to re-download cached gems
-      - name: Setup Pages
-        id: pages
-        uses: actions/configure-pages@v5
-      - name: Build with Jekyll
-        # Outputs to the './_site' directory by default
-        run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
-        env:
-          JEKYLL_ENV: production
-      - name: Upload artifact
-        # Automatically uploads an artifact from the './_site' directory by default
-        uses: actions/upload-pages-artifact@v3
 
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build the site in the ruby container
+      run: |
+        docker run \
+        -v ${{ github.workspace }}:/srv/jekyll -v ${{ github.workspace }}/_site:/srv/jekyll/_site \
+        ubuntu:jammy /bin/bash -c "
+        apt-get update && \
+        apt-get install -y wget bzip2 python3-pip supervisor && \
+        apt-get clean && \
+        wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh && \
+        bash /tmp/miniconda.sh -b -p /opt/miniconda && \
+        rm /tmp/miniconda.sh && \
+        export PATH='/opt/miniconda/bin:$PATH' && \
+        conda init bash && \
+        bash -c 'source ~/.bashrc && conda install -c conda-forge -c anaconda python=3.10  gcc=11.3 gcc_linux-64=11.3 gfortran=11.3  gxx=11.3 sysroot_linux-64=2.28 go cmake make automake autoconf glib expat libnetcdf zlib nodejs ruby' && \
+        source ~/.bashrc
+        ln -s $CONDA_PREFIX/lib $CONDA_PREFIX/lib64 && \
+        export CUDA_HOME=$CONDA_PREFIX && \
+        export XLA_FLAGS=$CONDA_PREFIX && \
+        export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$CONDA_PREFIX/lib64 && \
+        export CFLAGS='-I$CONDA_PREFIX/include' && \
+        export CXXFLAGS='-I$CONDA_PREFIX/include' && \
+        export CPPFLAGS='-I$CONDA_PREFIX/include' && \
+        export CC=$CONDA_PREFIX/bin/gcc && \
+        export CXX=$CONDA_PREFIX/bin/g++ && \
+        export LDFLAGS='-L$CONDA_PREFIX/lib -L$CONDA_PREFIX/lib64' && \
+        gem install bundler jekyll && \
+        gem uninstall sass && \
+        cd /srv/jekyll && \
+        bundle install && \
+        jekyll build --future"
   # Deployment job
   deploy:
     environment:

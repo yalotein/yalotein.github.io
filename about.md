@@ -8,7 +8,7 @@ bodyClass: page-about
 
 ## About Us
 
-Welcome to Sai-Long Bio, a pioneer in AI-accelerated macromolecular discovery and design. We specialize in leveraging cutting-edge artificial intelligence, bioinformatics, and computational biophysics to revolutionize the way biomacromolecules are discovered, designed, and optimized. Our mission is to drive innovation and efficiency in the field of macromolecular research and development, providing groundbreaking solutions for various industrial applications.
+Welcome to Sai-Long Biotechnology, a pioneer in AI-accelerated macromolecular discovery and design. We specialize in leveraging cutting-edge artificial intelligence, bioinformatics, and computational biophysics to revolutionize the way biomacromolecules are discovered, designed, and optimized. Our mission is to drive innovation and efficiency in the field of macromolecular research and development, providing groundbreaking solutions for various industrial applications.
 
 ## Our Expertise
 
